@@ -1,0 +1,100 @@
+class User:
+    def __init__(self, id, name, email):
+        self.id = id
+        self.name = name
+        self.email = email
+
+class Client(User):
+    def __init__(self, id, name, email):
+        super().__init__(id, name, email)
+        self.orders = []
+
+    def place_order(self, order):
+        self.orders.append(order)
+        print(f"{self.name} создал заказ {order.id}")
+
+class Courier(User):
+    def __init__(self, id, name, email):
+        super().__init__(id, name, email)
+        self.deliveries = []
+
+    def deliver(self, delivery):
+        print(f"Курьер {self.name} доставляет заказ {delivery.order.id}")
+        delivery.complete()
+        self.deliveries.append(delivery)
+
+class Product:
+    def __init__(self, id, name, stock):
+        self.id = id
+        self.name = name
+        self.stock = stock
+
+class Warehouse:
+    def __init__(self):
+        self.products = []
+
+    def add_product(self, product):
+        self.products.append(product)
+        print(f"Товар {product.name} добавлен на склад")
+
+    def check_stock(self, product_id):
+        for p in self.products:
+            if p.id == product_id:
+                return p.stock
+        return 0
+
+class Order:
+    def __init__(self, id, client, products):
+        self.id = id
+        self.client = client
+        self.products = products
+        self.status = "Создан"
+
+    def pay(self):
+        print(f"Заказ {self.id} оплачен")
+        self.status = "Оплачен"
+
+class Delivery:
+    def __init__(self, order, courier):
+        self.order = order
+        self.courier = courier
+        self.status = "В пути"
+
+    def complete(self):
+        self.status = "Доставлено"
+        print(f"Заказ {self.order.id} доставлен")
+
+class RouteOptimizer:
+    def optimize(self, order):
+        print(f"Оптимизация маршрута для заказа {order.id}")
+
+class NotificationService:
+    def notify_client(self, client, message):
+        print(f"Уведомление клиенту {client.name}: {message}")
+
+    def notify_courier(self, courier, message):
+        print(f"Уведомление курьеру {courier.name}: {message}")
+
+class Payment:
+    def process(self, order):
+        order.pay()
+        print(f"Платеж обработан для заказа {order.id}")
+
+client1 = Client(1, "Courier1", "courier1@gmail.com")
+courier1 = Courier(1, "Courier2", "courier2@gmail.com")
+warehouse = Warehouse()
+product1 = Product(1, "Ноутбук", 17)
+product2 = Product(2, "Смартфон", 29)
+warehouse.add_product(product1)
+warehouse.add_product(product2)
+order1 = Order(1, client1, [product1, product2])
+client1.place_order(order1)
+payment_service = Payment()
+payment_service.process(order1)
+optimizer = RouteOptimizer()
+optimizer.optimize(order1)
+delivery1 = Delivery(order1, courier1)
+courier1.deliver(delivery1)
+notifier = NotificationService()
+notifier.notify_client(client1, f"Ваш заказ {order1.id} доставлен!")
+notifier.notify_courier(courier1, f"Вы доставили заказ {order1.id}")
