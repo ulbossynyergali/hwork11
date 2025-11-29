@@ -1,0 +1,212 @@
+from datetime import datetime
+from typing import List, Optional
+
+class User:
+    def __init__(self, user_id: int, name: str, email: str, address: str, phone: str, role: str):
+        self.ID = user_id
+        self.name = name
+        self.email = email
+        self.address = address
+        self.phone = phone
+        self.role = role
+
+    def register(self):
+        print(f"{self.name} зарегистрирован(а).")
+
+    def login(self):
+        print(f"{self.name} вошёл(ла) в систему.")
+
+    def update_data(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        print(f"Данные пользователя {self.name} обновлены.")
+
+
+class Client(User):
+    def __init__(self, user_id: int, name: str, email: str, address: str, phone: str, loyalty_points: int = 0):
+        super().__init__(user_id, name, email, address, phone, role="Client")
+        self.loyalty_points = loyalty_points
+        self.orders: List['Order'] = []
+
+    def add_order(self, order: 'Order'):
+        self.orders.append(order)
+
+
+class Admin(User):
+    def __init__(self, user_id: int, name: str, email: str, address: str, phone: str):
+        super().__init__(user_id, name, email, address, phone, role="Admin")
+
+    def log_action(self, action: str):
+        print(f"Admin {self.name} действие: {action}")
+
+
+class Category:
+    def __init__(self, category_id: int, name: str, description: str):
+        self.ID = category_id
+        self.name = name
+        self.description = description
+
+
+class Product:
+    def __init__(self, product_id: int, name: str, description: str, price: float, stock: int, category: Category):
+        self.ID = product_id
+        self.name = name
+        self.description = description
+        self.price = price
+        self.stock = stock
+        self.category = category
+
+    def create(self):
+        print(f"Товар {self.name} создан.")
+
+    def update(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        print(f"Товар {self.name} обновлён.")
+
+    def delete(self):
+        print(f"Товар {self.name} удалён.")
+
+
+class PromoCode:
+    def __init__(self, code: str, discount_percent: int):
+        self.code = code
+        self.discount_percent = discount_percent
+
+    def is_valid(self) -> bool:
+        return True  # пример проверки
+
+
+class PaymentMethod:
+    def __init__(self, payment_id: int, amount: float, date: datetime):
+        self.ID = payment_id
+        self.amount = amount
+        self.date = date
+
+    def process(self):
+        raise NotImplementedError("Подклассы должны реализовать process()")
+
+
+class CardPayment(PaymentMethod):
+    def __init__(self, payment_id: int, amount: float, date: datetime, card_number: str):
+        super().__init__(payment_id, amount, date)
+        self.card_number = card_number
+
+    def process(self):
+        print(f"Обработка платежа по карте на сумму {self.amount}")
+
+
+class WalletPayment(PaymentMethod):
+    def __init__(self, payment_id: int, amount: float, date: datetime, wallet_id: str):
+        super().__init__(payment_id, amount, date)
+        self.wallet_id = wallet_id
+
+    def process(self):
+        print(f"Обработка платежа через кошелёк на сумму {self.amount}")
+
+
+class Payment:
+    def __init__(self, payment_id: int, payment_type: str, amount: float, status: str, date: datetime):
+        self.ID = payment_id
+        self.type = payment_type
+        self.amount = amount
+        self.status = status
+        self.date = date
+
+    def process(self):
+        print(f"Обработка платежа {self.ID}")
+
+    def refund(self):
+        print(f"Возврат платежа {self.ID}")
+
+
+class Order:
+    def __init__(self, order_id: int, client: Client, products: List[Product], promo: Optional[PromoCode] = None):
+        self.ID = order_id
+        self.client = client
+        self.products = products
+        self.promo = promo
+        self.status = "создан"
+        self.total = sum(p.price for p in products)
+        if promo:
+            self.total *= (1 - promo.discount_percent / 100)
+        self.payment: Optional[Payment] = None
+        self.delivery: Optional['Delivery'] = None
+
+    def place_order(self):
+        self.status = "оформлен"
+        print(f"Заказ {self.ID} оформлен. Сумма: {self.total}")
+
+    def cancel(self):
+        self.status = "отменён"
+        print(f"Заказ {self.ID} отменён")
+
+    def pay(self, payment: Payment):
+        self.payment = payment
+        self.status = "оплачен"
+        print(f"Заказ {self.ID} оплачен. Сумма: {payment.amount}")
+
+
+class Delivery:
+    def __init__(self, delivery_id: int, address: str, courier: str):
+        self.ID = delivery_id
+        self.address = address
+        self.status = "ожидает"
+        self.courier = courier
+
+    def send(self):
+        self.status = "отправлен"
+        print(f"Доставка {self.ID} отправлена")
+
+    def track(self):
+        print(f"Статус доставки {self.ID}: {self.status}")
+
+    def complete(self):
+        self.status = "завершена"
+        print(f"Доставка {self.ID} завершена")
+
+
+class Review:
+    def __init__(self, review_id: int, client: Client, product: Product, rating: int, comment: str):
+        self.ID = review_id
+        self.client = client
+        self.product = product
+        self.rating = rating
+        self.comment = comment
+
+client = Client(1, "Client1", "client1@gmail.com", "Алматы", "+77070001122")
+admin = Admin(100, "Admin1", "admin@gmail.com", "Алматы", "+77773334455")
+
+client.register()
+admin.log_action("Система запущена")
+
+category1 = Category(10, "Электроника", "Смартфоны и аксессуары")
+product1 = Product(101, "Смартфон A", "Новый смартфон", 650000, 12, category1)
+product2 = Product(102, "Наушники B", "Беспроводные наушники", 35000, 27, category1)
+
+product1.create()
+product2.create()
+
+promo = PromoCode("SALE10", 10)
+
+order = Order(5001, client, [product1, product2], promo)
+client.add_order(order)
+order.place_order()
+
+payment = Payment(3001, "Card", order.total, "pending", datetime.now())
+order.pay(payment)
+
+delivery = Delivery(9001, client.address, "Курьер 1")
+order.delivery = delivery
+delivery.send()
+delivery.track()
+delivery.complete()
+
+review = Review(7001, client, product1, 5, "Отличный смартфон!")
+print(f"Отзыв от {review.client.name} для {review.product.name}: {review.rating} звезд - {review.comment}")
+
+print("\nСТАТУСЫ:")
+print(f"Клиент: {client.name}, Лояльные очки: {client.loyalty_points}")
+print(f"Заказ {order.ID}: Статус - {order.status}, Сумма - {order.total}")
+print(f"Платеж {payment.ID}: Статус - {payment.status}, Сумма - {payment.amount}")
+print(f"Доставка {delivery.ID}: Статус - {delivery.status}")
